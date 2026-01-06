@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JRN | Personal Diary</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Merriweather:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="app-container">
+        <header>
+            <div class="logo">JRN</div>
+            <div class="theme-toggle" id="themeToggle">☾</div>
+        </header>
+
+        <main>
+            <section class="compose-section">
+                <textarea id="entryContent" placeholder="What's on your mind?"></textarea>
+                <div class="compose-actions">
+                    <select id="moodSelect">
+                        <option value="neutral">Neutral</option>
+                        <option value="happy">Happy</option>
+                        <option value="sad">Sad</option>
+                        <option value="anxious">Anxious</option>
+                        <option value="excited">Excited</option>
+                    </select>
+                    <button id="saveBtn">Log Entry</button>
+                </div>
+            </section>
+
+            <section class="timeline-section">
+                <h2>Recent Entries</h2>
+                <div id="entriesList" class="entries-list">
+                    <!-- Entries will be loaded here -->
+                    <div class="loading">Loading thoughts...</div>
+                </div>
+            </section>
+        </main>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
