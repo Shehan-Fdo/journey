@@ -11,7 +11,15 @@ async function loadEntries() {
     try {
         const res = await fetch('/api/entries');
         const entries = await res.json();
-        renderEntries(entries);
+
+        // Check if response is an array (success) or an error object
+        if (Array.isArray(entries)) {
+            renderEntries(entries);
+        } else {
+            // Handle error response from server
+            entriesList.innerHTML = '<div class="loading">Failed to load entries. Database connection error.</div>';
+            console.error('API Error:', entries);
+        }
     } catch (err) {
         entriesList.innerHTML = '<div class="loading">Failed to load entries. Check database connection.</div>';
         console.error(err);
@@ -25,24 +33,44 @@ function renderEntries(entries) {
         return;
     }
 
-    entriesList.innerHTML = entries.map(entry => `
-        <div class="entry-card" id="entry-${entry.id}">
+    entriesList.innerHTML = entries.map(entry => {
+        const entryId = entry.id;
+        const escapedContent = entry.content.replace(/'/g, "\\'").replace(/\n/g, '\\n');
+
+        return `
+        <div class="entry-card" id="entry-${entryId}">
             <div class="entry-header">
                 <div>
                     <span class="date">${new Date(entry.created_at).toLocaleDateString(undefined, {
-        weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-    })}</span>
+            weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+        })}</span>
                     <span class="mood">${entry.mood || ''}</span>
                 </div>
                 <div class="actions">
-                     <button class="icon-btn edit-btn" onclick="startEdit(${entry.id}, '${entry.content.replace(/'/g, "\\'")}', '${entry.mood}')">✎</button>
-                     <button class="icon-btn delete-btn" onclick="deleteEntry(${entry.id})">🗑</button>
+                     <button class="icon-btn edit-btn" onclick="startEdit(${entryId}, '${escapedContent}', '${entry.mood}')">✎</button>
+                     <button class="icon-btn delete-btn" onclick="deleteEntry(${entryId})">🗑</button>
                 </div>
             </div>
-            <div class="entry-content">${entry.content}</div>
+            <div class="entry-content truncated" id="content-${entryId}">${entry.content}</div>
+            <button class="see-more-btn" id="toggle-${entryId}" onclick="toggleContent(${entryId})">See more</button>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
+
+// Toggle content expansion
+window.toggleContent = (id) => {
+    const contentDiv = document.getElementById(`content-${id}`);
+    const toggleBtn = document.getElementById(`toggle-${id}`);
+
+    if (contentDiv.classList.contains('truncated')) {
+        contentDiv.classList.remove('truncated');
+        toggleBtn.textContent = 'See less';
+    } else {
+        contentDiv.classList.add('truncated');
+        toggleBtn.textContent = 'See more';
+    }
+};
 
 // Start Edit Mode
 window.startEdit = (id, content, mood) => {
