@@ -4,36 +4,68 @@ const saveBtn = document.getElementById('saveBtn');
 const entriesList = document.getElementById('entriesList');
 const themeToggle = document.getElementById('themeToggle');
 
+const sentinel = document.getElementById('infiniteScrollSentinel');
+
 let editingId = null;
+let currentOffset = 0;
+const limit = 10;
+let hasMore = true;
+let isLoading = false;
 
 // Load entries
-async function loadEntries() {
+async function loadEntries(isInitial = true) {
+    if (isLoading || (!isInitial && !hasMore)) return;
+
+    isLoading = true;
+    if (isInitial) {
+        currentOffset = 0;
+        hasMore = true;
+        entriesList.innerHTML = '<div class="loading">Loading thoughts...</div>';
+    }
+
     try {
-        const res = await fetch('/api/entries');
+        const res = await fetch(`/api/entries?limit=${limit}&offset=${currentOffset}`);
         const entries = await res.json();
 
         // Check if response is an array (success) or an error object
         if (Array.isArray(entries)) {
-            renderEntries(entries);
+            if (isInitial) entriesList.innerHTML = '';
+
+            if (entries.length < limit) {
+                hasMore = false;
+            }
+
+            renderEntries(entries, !isInitial);
+            currentOffset += entries.length;
+
+            if (!hasMore && entriesList.children.length > 0) {
+                const endMsg = document.createElement('div');
+                endMsg.className = 'loading';
+                endMsg.textContent = 'All thoughts loaded.';
+                endMsg.style.padding = '20px';
+                endMsg.style.opacity = '0.5';
+                entriesList.appendChild(endMsg);
+            }
         } else {
-            // Handle error response from server
             entriesList.innerHTML = '<div class="loading">Failed to load entries. Database connection error.</div>';
             console.error('API Error:', entries);
         }
     } catch (err) {
-        entriesList.innerHTML = '<div class="loading">Failed to load entries. Check database connection.</div>';
+        if (isInitial) entriesList.innerHTML = '<div class="loading">Failed to load entries. Check database connection.</div>';
         console.error(err);
+    } finally {
+        isLoading = false;
     }
 }
 
 // Render entries
-function renderEntries(entries) {
-    if (entries.length === 0) {
+function renderEntries(entries, append = false) {
+    if (entries.length === 0 && !append) {
         entriesList.innerHTML = '<div class="loading">No entries yet. Start writing!</div>';
         return;
     }
 
-    entriesList.innerHTML = entries.map(entry => {
+    const html = entries.map(entry => {
         const entryId = entry.id;
         const escapedContent = entry.content.replace(/'/g, "\\'").replace(/\n/g, '\\n');
 
@@ -56,7 +88,26 @@ function renderEntries(entries) {
         </div>
     `;
     }).join('');
+
+    if (append) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = html;
+        while (tempDiv.firstChild) {
+            entriesList.appendChild(tempDiv.firstChild);
+        }
+    } else {
+        entriesList.innerHTML = html;
+    }
 }
+
+// Infinite Scroll Setup
+const observer = new IntersectionObserver((entries) => {
+    if (entries[0].isIntersecting && hasMore && !isLoading && currentOffset > 0) {
+        loadEntries(false);
+    }
+}, { threshold: 0.1 });
+
+if (sentinel) observer.observe(sentinel);
 
 // Toggle content expansion
 window.toggleContent = (id) => {

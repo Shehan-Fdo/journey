@@ -18,10 +18,16 @@ initDb();
 
 // API Routes
 
-// Get all entries (newest first, exclude deleted)
+// Get all entries (newest first, exclude deleted, with pagination)
 app.get('/api/entries', async (req, res) => {
     try {
-        const result = await query('SELECT * FROM entries WHERE deleted_at IS NULL ORDER BY created_at DESC');
+        const limit = parseInt(req.query.limit) || 10;
+        const offset = parseInt(req.query.offset) || 0;
+
+        const result = await query(
+            'SELECT * FROM entries WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT $1 OFFSET $2',
+            [limit, offset]
+        );
         res.json(result.rows);
     } catch (err) {
         console.error(err);
