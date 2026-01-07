@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,13 +8,26 @@
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Merriweather:ital,wght@0,300;0,400;1,300&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Merriweather:ital,wght@0,300;0,400;1,300&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+
 <body>
     <div class="app-container">
         <header>
             <div class="logo">JRN</div>
-            <div class="theme-toggle" id="themeToggle">☾</div>
+            <div class="header-actions">
+                <a href="chat.html" class="ai-toggle" title="AI Chat"><i data-lucide="sparkles"></i></a>
+                <div class="theme-toggle" id="themeToggle" title="Toggle Theme">
+                    <i data-lucide="moon" id="themeIcon"></i>
+                </div>
+                <button class="icon-btn" onclick="logout()" title="Logout"
+                    style="background:none; border:none; color:inherit; cursor:pointer; display:flex; align-items:center;">
+                    <i data-lucide="log-out"></i>
+                </button>
+            </div>
         </header>
 
         <main>
@@ -43,4 +57,5 @@
     </div>
     <script src="app.js"></script>
 </body>
+
 </html>

@@ -25,6 +25,12 @@ async function loadEntries(isInitial = true) {
 
     try {
         const res = await fetch(`/api/entries?limit=${limit}&offset=${currentOffset}`);
+
+        if (res.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
         const entries = await res.json();
 
         // Check if response is an array (success) or an error object
@@ -70,7 +76,7 @@ function renderEntries(entries, append = false) {
         const escapedContent = entry.content.replace(/'/g, "\\'").replace(/\n/g, '\\n');
 
         return `
-        <div class="entry-card" id="entry-${entryId}">
+            <div class="entry-card" id="entry-${entryId}">
             <div class="entry-header">
                 <div>
                     <span class="date">${new Date(entry.created_at).toLocaleDateString(undefined, {
@@ -79,8 +85,12 @@ function renderEntries(entries, append = false) {
                     <span class="mood">${entry.mood || ''}</span>
                 </div>
                 <div class="actions">
-                     <button class="icon-btn edit-btn" onclick="startEdit(${entryId}, '${escapedContent}', '${entry.mood}')">✎</button>
-                     <button class="icon-btn delete-btn" onclick="deleteEntry(${entryId})">🗑</button>
+                     <button class="icon-btn edit-btn" onclick="startEdit(${entryId}, '${escapedContent}', '${entry.mood}')" title="Edit">
+                        <i data-lucide="edit-3" style="width: 16px; height: 16px;"></i>
+                     </button>
+                     <button class="icon-btn delete-btn" onclick="deleteEntry(${entryId})" title="Delete">
+                        <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                     </button>
                 </div>
             </div>
             <div class="entry-content truncated" id="content-${entryId}">${entry.content}</div>
@@ -97,6 +107,10 @@ function renderEntries(entries, append = false) {
         }
     } else {
         entriesList.innerHTML = html;
+    }
+
+    if (window.lucide) {
+        lucide.createIcons();
     }
 }
 
@@ -139,6 +153,12 @@ window.deleteEntry = async (id) => {
 
     try {
         const res = await fetch(`/api/entries/${id}`, { method: 'DELETE' });
+
+        if (res.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
         if (res.ok) {
             loadEntries();
         }
@@ -167,6 +187,11 @@ saveBtn.addEventListener('click', async () => {
             body: JSON.stringify({ content, mood })
         });
 
+        if (res.status === 401) {
+            window.location.href = '/login';
+            return;
+        }
+
         if (res.ok) {
             entryContent.value = '';
             editingId = null;
@@ -185,7 +210,10 @@ saveBtn.addEventListener('click', async () => {
 // Theme handling
 const savedTheme = localStorage.getItem('theme') || 'light';
 document.documentElement.setAttribute('data-theme', savedTheme);
-themeToggle.textContent = savedTheme === 'dark' ? '☀' : '☾';
+const themeIcon = document.getElementById('themeIcon');
+if (themeIcon) {
+    themeIcon.setAttribute('data-lucide', savedTheme === 'dark' ? 'sun' : 'moon');
+}
 
 themeToggle.addEventListener('click', () => {
     const currentTheme = document.documentElement.getAttribute('data-theme');
@@ -193,8 +221,27 @@ themeToggle.addEventListener('click', () => {
 
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('theme', newTheme);
-    themeToggle.textContent = newTheme === 'dark' ? '☀' : '☾';
+
+    if (themeIcon) {
+        themeIcon.setAttribute('data-lucide', newTheme === 'dark' ? 'sun' : 'moon');
+        lucide.createIcons();
+    }
 });
+
+// Logout handling
+window.logout = async () => {
+    try {
+        await fetch('/api/logout', { method: 'POST' });
+        window.location.href = '/login';
+    } catch (err) {
+        console.error('Logout failed', err);
+    }
+};
 
 // Initial Load
 loadEntries();
+
+// Initialize Lucide Icons
+if (window.lucide) {
+    lucide.createIcons();
+}

@@ -61,6 +61,24 @@ header {
     padding: 5px;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.ai-toggle {
+    text-decoration: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: transform 0.2s;
+    color: var(--text-color);
+}
+
+.ai-toggle:hover {
+    transform: scale(1.2);
+}
+
 .compose-section {
     margin-bottom: 40px;
 }

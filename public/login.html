@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JRN | Login</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            text-align: center;
+        }
+
+        .login-card h1 {
+            margin-bottom: 30px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            letter-spacing: -1px;
+        }
+
+        .login-form {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .input-group {
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--text-color);
+            font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .login-btn {
+            background: var(--text-color);
+            color: var(--bg-color);
+            border: none;
+            padding: 14px;
+            border-radius: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+        }
+
+        .login-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .backup-toggle {
+            margin-top: 20px;
+            font-size: 0.85rem;
+            opacity: 0.6;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+
+        .error-msg {
+            color: #ff4444;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            display: none;
+        }
+
+        [data-theme="dark"] .input-group input {
+            background: rgba(255, 255, 255, 0.03);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-container">
+        <div class="login-card">
+            <div class="logo" style="font-size: 2.5rem; margin-bottom: 10px;">JRN</div>
+            <p style="opacity: 0.6; margin-bottom: 30px;">Your private thoughts, secured.</p>
+
+            <form id="loginForm" class="login-form">
+                <div class="input-group" id="primaryGroup">
+                    <label for="password">Access Password</label>
+                    <input type="password" id="password" placeholder="Enter password" autocomplete="current-password">
+                </div>
+
+                <div class="input-group" id="backupGroup" style="display: none;">
+                    <label for="backupNickname">Security Question: Best Friend's Nickname</label>
+                    <input type="text" id="backupNickname" placeholder="Enter nickname">
+                </div>
+
+                <button type="submit" class="login-btn" id="loginBtn">
+                    <span id="btnText">Unlock Journal</span>
+                    <i data-lucide="lock"
+                        style="width: 18px; height: 18px; margin-left: 8px; vertical-align: middle;"></i>
+                </button>
+            </form>
+
+            <div class="error-msg" id="errorMsg">Invalid credentials. Please try again.</div>
+
+            <div class="backup-toggle" id="backupToggle">Lost access? Use backup nickname</div>
+        </div>
+    </div>
+
+    <script>
+        const loginForm = document.getElementById('loginForm');
+        const passwordInput = document.getElementById('password');
+        const backupInput = document.getElementById('backupNickname');
+        const primaryGroup = document.getElementById('primaryGroup');
+        const backupGroup = document.getElementById('backupGroup');
+        const backupToggle = document.getElementById('backupToggle');
+        const errorMsg = document.getElementById('errorMsg');
+        const loginBtn = document.getElementById('loginBtn');
+
+        let isBackup = false;
+
+        backupToggle.addEventListener('click', () => {
+            isBackup = !isBackup;
+            if (isBackup) {
+                primaryGroup.style.display = 'none';
+                backupGroup.style.display = 'block';
+                backupToggle.textContent = 'Back to password login';
+                passwordInput.value = '';
+                backupInput.focus();
+            } else {
+                primaryGroup.style.display = 'block';
+                backupGroup.style.display = 'none';
+                backupToggle.textContent = 'Lost access? Use backup nickname';
+                backupInput.value = '';
+                passwordInput.focus();
+            }
+            errorMsg.style.display = 'none';
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.style.display = 'none';
+            loginBtn.disabled = true;
+            const btnText = document.getElementById('btnText');
+            btnText.textContent = 'Verifying...';
+
+            const payload = isBackup
+                ? { backupNickname: backupInput.value.trim() }
+                : { password: passwordInput.value.trim() };
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (res.ok) {
+                    window.location.href = '/';
+                } else {
+                    errorMsg.style.display = 'block';
+                    loginBtn.disabled = false;
+                    btnText.textContent = 'Unlock Journal';
+                }
+            } catch (err) {
+                console.error(err);
+                errorMsg.textContent = 'Something went wrong. Try again.';
+                errorMsg.style.display = 'block';
+                loginBtn.disabled = false;
+                btnText.textContent = 'Unlock Journal';
+            }
+        });
+
+        // Apply theme from localStorage
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+
+        // Initialize Lucide Icons
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>

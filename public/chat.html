@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JRN | AI Chat</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Merriweather:ital,wght@0,300;0,400;1,300&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.435.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <style>
+        :root {
+            --chat-bg: #111111;
+            --msg-user-bg: #004a8f;
+            --msg-user-text: #ffffff;
+            --msg-ai-text: #e0e0e0;
+            --bg-color: #0c0c0c;
+            --text-color: #ffffff;
+            --glass-bg: rgba(255, 255, 255, 0.04);
+            --glass-border: rgba(255, 255, 255, 0.1);
+            --secondary-text: rgba(255, 255, 255, 0.5);
+        }
+
+        [data-theme="light"] {
+            --chat-bg: #f5f5f5;
+            --msg-user-bg: #0056b3;
+            --msg-ai-text: #1a1a1a;
+            --bg-color: #ffffff;
+            --text-color: #1a1a1a;
+            --glass-bg: rgba(0, 0, 0, 0.03);
+            --glass-border: rgba(0, 0, 0, 0.1);
+            --secondary-text: rgba(0, 0, 0, 0.5);
+        }
+
+        body {
+            overflow: hidden;
+            background: var(--bg-color);
+            color: var(--text-color);
+            transition: background 0.3s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 24px 20px;
+            z-index: 10;
+        }
+
+        .header-left,
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex: 1;
+        }
+
+        .header-right {
+            justify-content: flex-end;
+        }
+
+        .header-center {
+            flex: 0;
+        }
+
+        .back-btn {
+            text-decoration: none;
+            color: var(--secondary-text);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: color 0.2s;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .back-btn:hover {
+            color: var(--text-color);
+        }
+
+        .logo {
+            font-weight: 600;
+            letter-spacing: 4px;
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .theme-toggle {
+            justify-self: end;
+            cursor: pointer;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            transition: background 0.2s;
+        }
+
+        .theme-toggle:hover {
+            background: var(--glass-bg);
+        }
+
+        .theme-toggle i,
+        .theme-toggle svg {
+            width: 20px;
+            height: 20px;
+            color: var(--text-color);
+        }
+
+        .back-btn i,
+        .back-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 40px 20px 160px;
+            display: flex;
+            flex-direction: column;
+            gap: 48px;
+            scrollbar-width: none;
+        }
+
+        .chat-messages::-webkit-scrollbar {
+            display: none;
+        }
+
+        .message-row {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            position: relative;
+        }
+
+        .user-row {
+            align-items: flex-end;
+        }
+
+        .ai-row {
+            align-items: flex-start;
+        }
+
+        .message {
+            max-width: 85%;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            animation: messageFade 0.4s ease-out forwards;
+        }
+
+        @keyframes messageFade {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .user-message {
+            background: var(--msg-user-bg);
+            color: var(--msg-user-text);
+            padding: 12px 24px;
+            border-radius: 28px;
+            font-size: 0.98rem;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .user-actions {
+            display: flex;
+            gap: 16px;
+            opacity: 0;
+            padding: 8px 12px 0 0;
+            transition: opacity 0.2s;
+        }
+
+        .user-row:hover .user-actions {
+            opacity: 0.5;
+        }
+
+        .action-btn {
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .action-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+            color: var(--text-color);
+        }
+
+        .ai-message {
+            background: transparent;
+            color: var(--msg-ai-text);
+            padding: 0;
+            border: none;
+            max-width: 100%;
+        }
+
+        .ai-message p {
+            margin-bottom: 24px;
+        }
+
+        .ai-message p:last-child {
+            margin-bottom: 0;
+        }
+
+        .ai-message strong {
+            color: var(--text-color);
+            font-weight: 600;
+        }
+
+        .ai-message em {
+            font-style: italic;
+            opacity: 0.9;
+        }
+
+        .chat-input-wrapper {
+            padding: 20px;
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(transparent, var(--bg-color) 40%);
+        }
+
+        .scroll-down-btn {
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            color: var(--text-color);
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-bottom: 20px;
+            opacity: 0;
+            transform: translateY(10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .scroll-down-btn.visible {
+            opacity: 0.8;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .scroll-down-btn:hover {
+            opacity: 1;
+            transform: scale(1.1);
+        }
+
+        .chat-input-area {
+            width: 100%;
+            max-width: 700px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 32px;
+            padding: 4px 4px 4px 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            transition: border-color 0.3s, transform 0.3s;
+        }
+
+        .chat-input-area:focus-within {
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .chat-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            padding: 12px 0;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 1rem;
+            line-height: 1.5;
+            min-height: 24px;
+            height: 24px;
+            resize: none;
+            max-height: 144px;
+            /* ~6 lines */
+            outline: none;
+            overflow-y: auto;
+        }
+
+        .chat-input::-webkit-scrollbar {
+            display: none;
+        }
+
+        .chat-input {
+            scrollbar-width: none;
+        }
+
+        [data-theme="light"] .chat-input {
+            color: #000000;
+        }
+
+        .send-btn {
+            background: #ffffff;
+            color: #000000;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .send-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+        }
+
+        .send-btn:active {
+            transform: scale(0.95);
+        }
+
+        .send-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .send-btn svg {
+            width: 20px;
+            height: 20px;
+            pointer-events: none;
+        }
+
+        .typing-indicator {
+            align-self: flex-start;
+            padding: 0 0 16px 20px;
+            font-size: 0.85rem;
+            color: var(--secondary-text);
+            display: none;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            max-width: 700px;
+        }
+
+        .dot {
+            width: 4px;
+            height: 4px;
+            background: var(--secondary-text);
+            border-radius: 50%;
+            animation: dotWave 1.4s infinite linear;
+        }
+
+        .dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes dotWave {
+
+            0%,
+            60%,
+            100% {
+                transform: translateY(0);
+            }
+
+            30% {
+                transform: translateY(-5px);
+            }
+        }
+
+        [data-theme="light"] {
+            --glass-bg: #ffffff;
+            --glass-border: #e0e0e0;
+        }
+
+        [data-theme="light"] .send-btn {
+            background: #000000;
+            color: #ffffff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="chat-container">
+        <header class="chat-header">
+            <div class="header-left">
+                <a href="index.html" class="back-btn">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                    </svg>
+                    Back
+                </a>
+            </div>
+            <div class="header-center">
+                <div class="logo">CHAT</div>
+            </div>
+            <div class="header-right">
+                <div class="theme-toggle" id="resetChat" title="Reset Chat" style="margin-right: 8px;">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+                        <path d="M3 3v5h5"></path>
+                    </svg>
+                </div>
+                <div class="theme-toggle" id="themeToggle">
+                    <svg id="themeIconSvg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <!-- Initial icon will be set by JS -->
+                    </svg>
+                </div>
+            </div>
+        </header>
+
+        <div class="chat-messages" id="chatMessages">
+            <!-- Messages will be injected here -->
+        </div>
+
+        <div class="chat-input-wrapper">
+            <div id="scrollToBottom" class="scroll-down-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    stroke-linejoin="round" style="width: 20px; height: 20px;">
+                    <line x1="12" y1="5" x2="12" y2="19"></line>
+                    <polyline points="19 12 12 19 5 12"></polyline>
+                </svg>
+            </div>
+
+            <div class="typing-indicator" id="typingIndicator">
+                <span style="letter-spacing: 1px; font-weight: 300;">reflecting</span>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+
+            <div class="chat-input-area">
+                <textarea class="chat-input" id="chatInput" placeholder="Write your thoughts..." rows="1"></textarea>
+                <button class="send-btn" id="sendBtn" title="Send message">
+                    <!-- Inline SVG fallback for guaranteed icon rendering -->
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"
+                        stroke-linejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="chat.js"></script>
+    <script>
+        // Theme Sync Logic
+        const themeToggle = document.getElementById('themeToggle');
+        const themeIconSvg = document.getElementById('themeIconSvg');
+
+        const moonPath = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+        const sunPath = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
+
+        const updateTheme = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            if (themeIconSvg) {
+                themeIconSvg.innerHTML = theme === 'dark' ? sunPath : moonPath;
+            }
+        };
+
+        const savedTheme = localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        updateTheme(savedTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            localStorage.setItem('theme', newTheme);
+            updateTheme(newTheme);
+        });
+
+        if (window.lucide) lucide.createIcons();
+    </script>
+</body>
+
+</html>
